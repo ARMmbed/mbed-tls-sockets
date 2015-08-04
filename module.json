@@ -1,0 +1,25 @@
+{
+  "name": "mbed-secure-sockets",
+  "version": "0.0.0",
+  "description": "C++ Asynchronous Secure Sockets Layer",
+  "private": true,
+  "keywords": [
+    "mbed",
+    "network",
+    "TLS",
+    "DTLS",
+    "sockets"
+  ],
+  "author": "manuel.pegourie-gonnard@arm.com",
+  "licenses": [
+    {
+      "url": "https://spdx.org/licenses/Apache-2.0",
+      "type": "Apache-2.0"
+    }
+  ],
+  "dependencies": {
+    "mbed-net-sockets": "~0.2.0",
+    "mbedtls": "^2.0.1"
+  },
+  "targetDependencies": {}
+}
