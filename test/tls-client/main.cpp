@@ -1,35 +1,19 @@
 /*
- *  Hello world example of a TLS client: fetch an HTTPS page
+ * Copyright (c) 2015, ARM Limited, All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
  *
- *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  This file is part of mbed TLS (https://tls.mbed.org)
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
-#if !defined(TARGET_LIKE_MBED)
-
-#include <stdio.h>
-
-int main() {
-    printf("this program only works on mbed OS\n");
-    return 0;
-}
-
-#else
 
 /** \file main.cpp
  *  \brief An example TLS Client application
@@ -49,7 +33,7 @@ int main() {
 
 #include "mbed.h"
 #include "EthernetInterface.h"
-#include "mbed-net-sockets/TCPStream.h"
+#include "mbed-secure-sockets/TLSStream.h"
 #include "test_env.h"
 #include "minar/minar.h"
 
@@ -133,13 +117,12 @@ public:
         _gothello = false;
         _got200 = false;
         _bpos = 0;
-        _request_sent = 0;
         _stream.open(SOCKET_AF_INET4);
+        //_stream.setOnError(TLSStream::ErrorHandler_t(this, &HelloHTTPS::onError));
 
         mbedtls_entropy_init(&_entropy);
         mbedtls_ctr_drbg_init(&_ctr_drbg);
         mbedtls_x509_crt_init(&_cacert);
-        mbedtls_ssl_init(&_ssl);
         mbedtls_ssl_config_init(&_ssl_conf);
     }
     /**
@@ -148,7 +131,6 @@ public:
      * Starts by clearing test flags, then resolves the address with DNS.
      *
      * @param[in] path The path of the file to fetch from the HTTPS server
-     * @return SOCKET_ERROR_NONE on success, or an error code on failure
      */
     void startTest(const char *path) {
         /* Initialize the flags */
@@ -156,34 +138,21 @@ public:
         _gothello = false;
         _error = false;
         _disconnected = false;
-        _request_sent = false;
         /* Fill the request buffer */
         _bpos = snprintf(_buffer, sizeof(_buffer) - 1, "GET %s HTTP/1.1\nHost: %s\n\n", path, HTTPS_SERVER_NAME);
 
         /*
          * Initialize TLS-related stuf.
          */
-        int ret;
-        if ((ret = mbedtls_ctr_drbg_seed(&_ctr_drbg, mbedtls_entropy_func, &_entropy,
-                          (const unsigned char *) DRBG_PERS,
-                          sizeof (DRBG_PERS))) != 0) {
-            print_mbedtls_error("mbedtls_crt_drbg_init", ret);
-            _error = true;
-            return;
-        }
-
-        if ((ret = mbedtls_x509_crt_parse(&_cacert, (const unsigned char *) SSL_CA_PEM,
-                           sizeof (SSL_CA_PEM))) != 0) {
-            print_mbedtls_error("mbedtls_x509_crt_parse", ret);
-            _error = true;
-            return;
-        }
-
-        if ((ret = mbedtls_ssl_config_defaults(&_ssl_conf,
-                        MBEDTLS_SSL_IS_CLIENT,
-                        MBEDTLS_SSL_TRANSPORT_STREAM,
-                        MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
-            print_mbedtls_error("mbedtls_ssl_config_defaults", ret);
+        if (mbedtls_ctr_drbg_seed(&_ctr_drbg, mbedtls_entropy_func, &_entropy,
+                    (const unsigned char *) DRBG_PERS,
+                    sizeof (DRBG_PERS)) != 0 ||
+                mbedtls_x509_crt_parse(&_cacert, (const unsigned char *) SSL_CA_PEM,
+                    sizeof (SSL_CA_PEM)) != 0 ||
+                mbedtls_ssl_config_defaults(&_ssl_conf,
+                    MBEDTLS_SSL_IS_CLIENT,
+                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                    MBEDTLS_SSL_PRESET_DEFAULT) != 0) {
             _error = true;
             return;
         }
@@ -201,23 +170,13 @@ public:
         mbedtls_debug_set_threshold(DEBUG_LEVEL);
 #endif
 
-        if ((ret = mbedtls_ssl_setup(&_ssl, &_ssl_conf)) != 0) {
-            print_mbedtls_error("mbedtls_ssl_setup", ret);
-            _error = true;
-            return;
-        }
-
-        mbedtls_ssl_set_hostname(&_ssl, HTTPS_SERVER_NAME);
-
-        mbedtls_ssl_set_bio(&_ssl, static_cast<void *>(&_stream),
-                                   ssl_send, ssl_recv, NULL );
-
+        _stream.setup(&_ssl_conf, _domain);
 
         /* Connect to the server */
         printf("Starting DNS lookup for %s\r\n", _domain);
         /* Resolve the domain name: */
-        socket_error_t err = _stream.resolve(_domain, TCPStream::DNSHandler_t(this, &HelloHTTPS::onDNS));
-        _stream.error_check(err);
+        socket_error_t err = _stream.resolve(_domain, mbed::Sockets::v0::Socket::DNSHandler_t(this, &HelloHTTPS::onDNS));
+        //_stream.error_check(err);
     }
     /**
      * Check if the test has completed.
@@ -233,24 +192,7 @@ public:
     bool error() {
         return _error;
     }
-    /**
-     * Closes the TCP socket
-     */
-    void close() {
-        _stream.close();
-        while (!_disconnected)
-            __WFI();
-    }
 protected:
-    /**
-     * Helper for pretty-printing mbed TLS error codes
-     */
-    static void print_mbedtls_error(const char *name, int err) {
-        char buf[128];
-        mbedtls_strerror(err, buf, sizeof (buf));
-        printf("%s() failed: -0x%04x (%d): %s\r\n", name, -err, err, buf);
-    }
-
 #if DEBUG_LEVEL > 0
     /**
      * Debug callback for mbed TLS
@@ -296,129 +238,46 @@ protected:
         return 0;
     }
 #endif
-
-    /**
-     * Receive callback for mbed TLS
-     */
-    static int ssl_recv(void *ctx, unsigned char *buf, size_t len) {
-        TCPStream *stream = static_cast<TCPStream *>(ctx);
-        socket_error_t err = stream->recv(buf, &len);
-
-        if (err == SOCKET_ERROR_NONE) {
-            return static_cast<int>(len);
-        } else if (err == SOCKET_ERROR_WOULD_BLOCK) {
-            return MBEDTLS_ERR_SSL_WANT_READ;
-        } else {
-            return -1;
-        }
-    }
-
-    /**
-     * Send callback for mbed TLS
-     */
-    static int ssl_send(void *ctx, const unsigned char *buf, size_t len) {
-        TCPStream *stream = static_cast<TCPStream *>(ctx);
-
-        socket_error_t err = stream->send(buf, len);
-
-        if (err == SOCKET_ERROR_NONE) {
-            return static_cast<int>(len);
-        } else if (err == SOCKET_ERROR_WOULD_BLOCK) {
-            return MBEDTLS_ERR_SSL_WANT_WRITE;
-        } else {
-            return -1;
-        }
-    }
-
     void onError(Socket *s, socket_error_t err) {
         (void) s;
         printf("MBED: Socket Error: %s (%d)\r\n", socket_strerror(err), err);
         _stream.close();
         _error = true;
-        MBED_HOSTTEST_RESULT(false);
+        printf("{{%s}}\r\n",(error()?"failure":"success"));
+        printf("{{end}}\r\n");
     }
     /**
      * On Connect handler
-     * Starts the TLS handshake
+     * Sends the request which was generated in startTest
      */
-    void onConnect(TCPStream *s) {
+    void onConnect(TLSStream *s) {
         char buf[16];
         _remoteAddr.fmtIPv4(buf,sizeof(buf));
         printf("Connected to %s:%d\r\n", buf, _port);
-
-        s->setOnReadable(TCPStream::ReadableHandler_t(this, &HelloHTTPS::onReceive));
-        s->setOnDisconnect(TCPStream::DisconnectHandler_t(this, &HelloHTTPS::onDisconnect));
-
-        /* Start the handshake, the rest will be done in onReceive() */
-        printf("Starting the TLS handshake...\r\n");
-        int ret = mbedtls_ssl_handshake(&_ssl);
-        if (ret < 0) {
-            if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
-                ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-                print_mbedtls_error("mbedtls_ssl_handshake", ret);
-                onError(s, SOCKET_ERROR_UNKNOWN);
-            }
-            return;
-        }
+        /* Send the request */
+        s->setOnReadable(TLSStream::ReadableHandler_t(this, &HelloHTTPS::onReceive));
+        //s->setOnDisconnect(TLSStream::DisconnectHandler_t(this, &HelloHTTPS::onDisconnect));
+        printf("Sending HTTPS Get Request...\r\n");
+        socket_error_t err = _stream.send(_buffer, _bpos);
+        //s->error_check(err);
     }
     /**
      * On Receive handler
      * Parses the response from the server, to check for the HTTPS 200 status code and the expected response ("Hello World!")
      */
-    void onReceive(Socket *s) {
-        /* Send request if not done yet */
-        if (!_request_sent) {
-            int ret = mbedtls_ssl_write(&_ssl, (const unsigned char *) _buffer, _bpos);
-            if (ret < 0) {
-                if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
-                    ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-                    print_mbedtls_error("mbedtls_ssl_write", ret);
-                    onError(s, SOCKET_ERROR_UNKNOWN);
-                }
-                return;
-            }
-
-            /* If we get here, the request was sent */
-            _request_sent = 1;
-
-            /* It also means the handshake is done, time to print info */
-            printf("TLS connection to %s established\r\n", HTTPS_SERVER_NAME);
-            {
-                char buf[1024];
-                mbedtls_x509_crt_info(buf, sizeof(buf), "\r    ",
-                        mbedtls_ssl_get_peer_cert(&_ssl));
-                printf("Server certificate:\r\n%s\r", buf);
-
-#if defined(UNSAFE)
-                uint32_t flags = mbedtls_ssl_get_verify_result(&_ssl);
-                if( flags != 0 )
-                {
-                    mbedtls_x509_crt_verify_info(buf, sizeof (buf), "\r  ! ", flags);
-                    printf("Certificate verification failed:\r\n%s\r\r\n", buf);
-                }
-                else
-#endif
-                    printf("Certificate verification passed\r\n\r\n");
-            }
-        }
-
+    void onReceive(TLSStream *s) {
+        printf("HTTPS Response received.\r\n");
+        _bpos = sizeof(_buffer);
         /* Read data out of the socket */
-        int ret = mbedtls_ssl_read(&_ssl, (unsigned char *) _buffer, sizeof(_buffer));
-        if (ret < 0) {
-            if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-                print_mbedtls_error("mbedtls_ssl_read", ret);
-                onError(s, SOCKET_ERROR_UNKNOWN);
-            }
-            return;
-        }
-        _bpos = static_cast<size_t>(ret);
-
+        socket_error_t err = s->recv(_buffer, &_bpos);
+        //if (err != SOCKET_ERROR_NONE) {
+        //    onError(s, err);
+        //    return;
+        //}
         _buffer[_bpos] = 0;
-
         /* Check each of the flags */
         _got200 = _got200 || strstr(_buffer, HTTPS_OK_STR) != NULL;
         _gothello = _gothello || strstr(_buffer, HTTPS_HELLO_STR) != NULL;
-
         /* Print status messages */
         printf("HTTPS: Received %d chars from server\r\n", _bpos);
         printf("HTTPS: Received 200 OK status ... %s\r\n", _got200 ? "[OK]" : "[FAIL]");
@@ -446,20 +305,22 @@ protected:
             _remoteAddr.fmtIPv4(buf,sizeof(buf));
             printf("DNS Response Received:\r\n%s: %s\r\n", domain, buf);
             printf("Connecting to %s:%d\r\n", buf, _port);
-            socket_error_t err = _stream.connect(_remoteAddr, _port, TCPStream::ConnectHandler_t(this, &HelloHTTPS::onConnect));
+            socket_error_t err = _stream.connect(_remoteAddr, _port, TLSStream::ConnectHandler_t(this, &HelloHTTPS::onConnect));
 
             if (err != SOCKET_ERROR_NONE) {
                 onError(s, err);
+
             }
         }
     }
-    void onDisconnect(TCPStream *s) {
+    void onDisconnect(TLSStream *s) {
         s->close();
-        MBED_HOSTTEST_RESULT(!error());
+        printf("{{%s}}\r\n",(error()?"failure":"success"));
+        printf("{{end}}\r\n");
     }
 
 protected:
-    TCPStream _stream;              /**< The TCP Socket */
+    TLSStream _stream;              /**< The TLS Socket */
     const char *_domain;            /**< The domain name of the HTTPS server */
     const uint16_t _port;           /**< The HTTPS server port */
     char _buffer[RECV_BUFFER_SIZE]; /**< The response buffer */
@@ -469,12 +330,10 @@ protected:
     volatile bool _gothello;        /**< Status flag for finding the test string */
     volatile bool _error;           /**< Status flag for an error */
     volatile bool _disconnected;
-    volatile bool _request_sent;
 
     mbedtls_entropy_context _entropy;
     mbedtls_ctr_drbg_context _ctr_drbg;
     mbedtls_x509_crt _cacert;
-    mbedtls_ssl_context _ssl;
     mbedtls_ssl_config _ssl_conf;
 };
 
@@ -491,10 +350,7 @@ void app_start(int, char*[]) {
     Serial pc(USBTX, USBRX);
     pc.baud(115200);
 
-    MBED_HOSTTEST_TIMEOUT(120);
-    MBED_HOSTTEST_SELECT(default);
-    MBED_HOSTTEST_DESCRIPTION(mbed TLS example HTTPS client);
-    MBED_HOSTTEST_START("MBEDTLS_EX_HTTPS_CLIENT");
+    printf("{{start}}\r\n");
 
     /* Initialise with DHCP, connect, and start up the stack */
     eth.init();
@@ -508,5 +364,3 @@ void app_start(int, char*[]) {
     mbed::FunctionPointer1<void, const char*> fp(hello, &HelloHTTPS::startTest);
     minar::Scheduler::postCallback(fp.bind(HTTPS_PATH));
 }
-
-#endif /* TARGET_LIKE_MBED */
