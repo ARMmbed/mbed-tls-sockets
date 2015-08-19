@@ -90,11 +90,13 @@ socket_error_t TLSStream::send(const void * buf, const size_t len) {
         return SOCKET_ERROR_WOULD_BLOCK;
     }
 
-    if (ret != 0) {
+    if (ret < 0) {
         print_mbedtls_error("mbedtls_ssl_write", ret);
         _error = true;
         return SOCKET_ERROR_UNKNOWN;
     }
+
+    /* TODO: handle partial writes */
 
     return SOCKET_ERROR_NONE;
 }
