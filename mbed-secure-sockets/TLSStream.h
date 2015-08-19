@@ -33,13 +33,20 @@ public:
 
     /**
      * TLSStream constructor
-     *
-     * @param[in] domain    domain name to connect to
-     * @param[in] port      port to connect to
-     * @param[in] conf      TLS configuration to use
      */
-    TLSStream(const char * domain, const uint16_t port,
-              const mbedtls_ssl_config conf);
+    TLSStream(const socket_stack_t stack);
+
+    /**
+     * Set up the TLS connection.
+     *
+     * @param conf      SSL/TLS configuration
+     * @param hostname  Expected hostname for certificate verification
+     *
+     * @note hostname may be ommited if peer verification is also disabled in
+     * the configuration (Warning: this is insecure on clients).
+     */
+    socket_error_t setup(const mbedtls_ssl_config *conf,
+                         const char *hostname = NULL);
 
     /**
      * Open the socket
@@ -105,18 +112,13 @@ protected:
     void onReceive(mbed::Sockets::v0::Socket *s);
 
     mbed::Sockets::v0::TCPStream _stream; /**< underlying TCP Socket */
-    const char *_domain;            /**< remote domain */
-    const uint16_t _port;           /**< remot port */
-    mbed::Sockets::v0::SocketAddr _remoteAddr; /**< remote address */
 
-    mbedtls_ssl_config _ssl_conf;   /**< TLS configuration */
+    ConnectHandler_t _onTLSConnect;     /**< User connect handler   */
+    ReadableHandler_t _onTLSReadable;   /**< User read handler      */
+
     mbedtls_ssl_context _ssl;       /**< TLS context */
 
     volatile bool _error;           /**< Status flag for errors */
-    unsigned char _buf[1];          /**< Read buffer to peeking */
-
-    ConnectHandler_t _onConnect;    /**< User connect handler */
-    ReadableHandler_t _onReadable;  /**< User read handler */
 };
 
 #endif /* __MBED_SECURE_SOCKETS_TLSSTREAM_H__ */

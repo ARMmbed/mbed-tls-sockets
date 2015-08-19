@@ -24,19 +24,35 @@ using namespace mbed::Sockets::v0;
 /*
  * TODO:
  * - inherit from Socket/TCPStream somehow?
- * - allow other stacks/domains
  * - stop using printf for errors/info
- * - extended error code for SSL errors?
- * - add support for server
+ * - extended error code for SSL errors? (Brendan?)
+ * - add support for server (will be another backlog item)
  */
 
-TLSStream::TLSStream(const char * domain, const uint16_t port,
-                     const mbedtls_ssl_config conf) :
-    _stream(SOCKET_STACK_LWIP_IPV4), _domain(domain), _port(port),
-    _ssl_conf(conf), _error(false),
-    _onConnect(NULL), _onReadable(NULL)
+TLSStream::TLSStream(const socket_stack_t stack) :
+    _stream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL), _error(false)
 {
     mbedtls_ssl_init( &_ssl );
+}
+
+socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
+                                const char *hostname)
+{
+    int ret;
+
+    if ((ret = mbedtls_ssl_setup(&_ssl, conf)) != 0) {
+        print_mbedtls_error("mbedtls_ssl_setup", ret);
+        return SOCKET_ERROR_UNKNOWN;
+    }
+
+    if (hostname != NULL) {
+        mbedtls_ssl_set_hostname(&_ssl, hostname);
+    }
+
+    mbedtls_ssl_set_bio(&_ssl, static_cast<void *>(&_stream),
+                               ssl_send, ssl_recv, NULL );
+
+    return SOCKET_ERROR_NONE;
 }
 
 socket_error_t TLSStream::open(const socket_address_family_t af) {
@@ -46,19 +62,7 @@ socket_error_t TLSStream::open(const socket_address_family_t af) {
 socket_error_t TLSStream::connect(const SocketAddr &address,
                                   const uint16_t port,
                                   const ConnectHandler_t &onConnect) {
-    int ret;
-
-    _onConnect = onConnect;
-
-    if ((ret = mbedtls_ssl_setup(&_ssl, &_ssl_conf)) != 0) {
-        print_mbedtls_error("mbedtls_ssl_setup", ret);
-        return SOCKET_ERROR_UNKNOWN;
-    }
-
-    mbedtls_ssl_set_hostname(&_ssl, _domain);
-
-    mbedtls_ssl_set_bio(&_ssl, static_cast<void *>(&_stream),
-                               ssl_send, ssl_recv, NULL );
+    _onTLSConnect = onConnect;
 
     return _stream.connect(address, port,
             TCPStream::ConnectHandler_t(this, &TLSStream::onConnect));
@@ -176,8 +180,8 @@ void TLSStream::onReceive(Socket *s) {
         }
 
         /* If we get here, that means we just completed the handshake */
-        if (_onConnect)
-            minar::Scheduler::postCallback(_onConnect.bind(this));
+        if (_onTLSConnect)
+            minar::Scheduler::postCallback(_onTLSConnect.bind(this));
     }
 
     /* Check if data is available to be read */
@@ -196,5 +200,5 @@ void TLSStream::onReceive(Socket *s) {
      * 0 because EOF */
 
     /* If we get here, data is available to be read */
-    minar::Scheduler::postCallback(_onReadable.bind(this));
+    minar::Scheduler::postCallback(_onTLSReadable.bind(this));
 }
