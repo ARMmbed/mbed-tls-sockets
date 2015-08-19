@@ -32,7 +32,11 @@ using namespace mbed::Sockets::v0;
 TLSStream::TLSStream(const socket_stack_t stack) :
     _stream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL), _error(false)
 {
-    mbedtls_ssl_init( &_ssl );
+    mbedtls_ssl_init(&_ssl);
+}
+
+TLSStream::~TLSStream() {
+    mbedtls_ssl_free(&_ssl);
 }
 
 socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
@@ -57,6 +61,16 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
 
 socket_error_t TLSStream::open(const socket_address_family_t af) {
     return _stream.open(af);
+}
+
+socket_error_t TLSStream::resolve(const char* address,
+                                  const Socket::DNSHandler_t &onDNS) {
+    return _stream.resolve(address, onDNS);
+}
+
+
+void TLSStream::setOnReadable(ReadableHandler_t onReadable) {
+    _onTLSReadable = onReadable;
 }
 
 socket_error_t TLSStream::connect(const SocketAddr &address,
@@ -101,6 +115,11 @@ socket_error_t TLSStream::recv(void * buf, size_t *len) {
 
     *len = ret;
     return SOCKET_ERROR_NONE;
+}
+
+socket_error_t TLSStream::close() {
+    mbedtls_ssl_free(&_ssl);
+    return _stream.close();
 }
 
 void TLSStream::print_mbedtls_error(const char *name, int err) {

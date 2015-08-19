@@ -37,6 +37,11 @@ public:
     TLSStream(const socket_stack_t stack);
 
     /**
+     * TLSStream destructor
+     */
+    ~TLSStream();
+
+    /**
      * Set up the TLS connection.
      *
      * @param conf      SSL/TLS configuration
@@ -61,6 +66,17 @@ public:
                            const ConnectHandler_t &onConnect);
 
     /**
+     * Resolve a name
+     */
+    socket_error_t resolve(const char* address,
+                           const mbed::Sockets::v0::Socket::DNSHandler_t &onDNS);
+
+    /**
+     * Set the onReadable callback
+     */
+    void setOnReadable(ReadableHandler_t onReadable);
+
+    /**
      * Send data over an open connection
      */
     socket_error_t send(const void * buf, const size_t len);
@@ -69,6 +85,11 @@ public:
      * Receive data over an open connection
      */
     socket_error_t recv(void * buf, size_t *len);
+
+    /**
+     * Close the connection
+     */
+    socket_error_t close();
 
 protected:
     /**
