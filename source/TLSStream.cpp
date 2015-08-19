@@ -39,12 +39,16 @@ TLSStream::TLSStream(const char * domain, const uint16_t port,
     mbedtls_ssl_init( &_ssl );
 }
 
-socket_error_t TLSStream::connect(const ConnectHandler_t &onConnect) {
+socket_error_t TLSStream::open(const socket_address_family_t af) {
+    return _stream.open(af);
+}
+
+socket_error_t TLSStream::connect(const SocketAddr &address,
+                                  const uint16_t port,
+                                  const ConnectHandler_t &onConnect) {
     int ret;
 
     _onConnect = onConnect;
-
-    _stream.open(SOCKET_AF_INET4);
 
     if ((ret = mbedtls_ssl_setup(&_ssl, &_ssl_conf)) != 0) {
         print_mbedtls_error("mbedtls_ssl_setup", ret);
@@ -56,9 +60,8 @@ socket_error_t TLSStream::connect(const ConnectHandler_t &onConnect) {
     mbedtls_ssl_set_bio(&_ssl, static_cast<void *>(&_stream),
                                ssl_send, ssl_recv, NULL );
 
-    printf("Connecting to %s:%d\r\n", _domain, _port);
-    socket_error_t err = _stream.resolve(_domain, TCPStream::DNSHandler_t(this, &TLSStream::onDNS));
-    return err;
+    return _stream.connect(address, port,
+            TCPStream::ConnectHandler_t(this, &TLSStream::onConnect));
 }
 
 socket_error_t TLSStream::send(const void * buf, const size_t len) {
@@ -136,23 +139,6 @@ void TLSStream::onError(Socket *s, socket_error_t err) {
     _stream.close();
     _error = true;
     minar::Scheduler::stop();
-}
-
-void TLSStream::onDNS(Socket *s, struct socket_addr addr, const char *domain) {
-    /* Check that the result is a valid DNS response */
-    if (socket_addr_is_any(&addr)) {
-        /* Could not find DNS entry */
-        printf("Could not find DNS entry for %s", domain);
-        onError(s, SOCKET_ERROR_DNS_FAILED);
-    } else {
-        /* Start connecting to the remote host */
-        _remoteAddr.setAddr(&addr);
-        socket_error_t err = _stream.connect(_remoteAddr, _port, TCPStream::ConnectHandler_t(this, &TLSStream::onConnect));
-
-        if (err != SOCKET_ERROR_NONE) {
-            onError(s, err);
-        }
-    }
 }
 
 void TLSStream::onConnect(TCPStream *s) {

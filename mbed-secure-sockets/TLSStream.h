@@ -42,9 +42,16 @@ public:
               const mbedtls_ssl_config conf);
 
     /**
-     * Connect (execute a TLS handshake) with peer
+     * Open the socket
      */
-    socket_error_t connect(const ConnectHandler_t &onConnect);
+    socket_error_t open(const socket_address_family_t af);
+
+    /**
+     * Connect (and execute a TLS handshake) with peer
+     */
+    socket_error_t connect(const mbed::Sockets::v0::SocketAddr &address,
+                           const uint16_t port,
+                           const ConnectHandler_t &onConnect);
 
     /**
      * Send data over an open connection
