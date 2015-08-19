@@ -27,10 +27,11 @@ using namespace mbed::Sockets::v0;
  * - allow other stacks/domains
  * - stop using printf for errors/info
  * - extended error code for SSL errors?
+ * - add support for server
  */
 
 TLSStream::TLSStream(const char * domain, const uint16_t port,
-                    const mbedtls_ssl_config conf) :
+                     const mbedtls_ssl_config conf) :
     _stream(SOCKET_STACK_LWIP_IPV4), _domain(domain), _port(port),
     _ssl_conf(conf), _error(false),
     _onConnect(NULL), _onReadable(NULL)

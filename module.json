@@ -18,8 +18,8 @@
     }
   ],
   "dependencies": {
-    "mbed-net-sockets": "~0.2.0",
-    "mbedtls": "^2.0.1"
+    "sockets": "~0.3.0",
+    "mbedtls": "~2.0.4"
   },
   "targetDependencies": {}
 }
