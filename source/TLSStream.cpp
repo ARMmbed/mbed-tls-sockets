@@ -23,14 +23,13 @@ using namespace mbed::Sockets::v0;
 
 /*
  * TODO:
- * - inherit from Socket/TCPStream somehow?
  * - stop using printf for errors/info
  * - extended error code for SSL errors? (Brendan?)
  * - add support for server (will be another backlog item)
  */
 
 TLSStream::TLSStream(const socket_stack_t stack) :
-    _stream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL), _error(false)
+    TCPStream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL), _error(false)
 {
     mbedtls_ssl_init(&_ssl);
 }
@@ -53,21 +52,10 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
         mbedtls_ssl_set_hostname(&_ssl, hostname);
     }
 
-    mbedtls_ssl_set_bio(&_ssl, static_cast<void *>(&_stream),
-                               ssl_send, ssl_recv, NULL );
+    mbedtls_ssl_set_bio(&_ssl, this, ssl_send, ssl_recv, NULL );
 
     return SOCKET_ERROR_NONE;
 }
-
-socket_error_t TLSStream::open(const socket_address_family_t af) {
-    return _stream.open(af);
-}
-
-socket_error_t TLSStream::resolve(const char* address,
-                                  const Socket::DNSHandler_t &onDNS) {
-    return _stream.resolve(address, onDNS);
-}
-
 
 void TLSStream::setOnReadable(ReadableHandler_t onReadable) {
     _onTLSReadable = onReadable;
@@ -78,8 +66,8 @@ socket_error_t TLSStream::connect(const SocketAddr &address,
                                   const ConnectHandler_t &onConnect) {
     _onTLSConnect = onConnect;
 
-    return _stream.connect(address, port,
-            TCPStream::ConnectHandler_t(this, &TLSStream::onConnect));
+    return TCPStream::connect(address, port,
+                              ConnectHandler_t(this, &TLSStream::onConnect));
 }
 
 socket_error_t TLSStream::send(const void * buf, const size_t len) {
@@ -121,7 +109,7 @@ socket_error_t TLSStream::recv(void * buf, size_t *len) {
 
 socket_error_t TLSStream::close() {
     mbedtls_ssl_free(&_ssl);
-    return _stream.close();
+    return TCPStream::close();
 }
 
 void TLSStream::print_mbedtls_error(const char *name, int err) {
@@ -131,7 +119,7 @@ void TLSStream::print_mbedtls_error(const char *name, int err) {
 }
 
 int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
-    TCPStream *stream = static_cast<TCPStream *>(ctx);
+    TLSStream *stream = static_cast<TLSStream *>(ctx);
     socket_error_t err = stream->recv(buf, &len);
 
     if (err == SOCKET_ERROR_NONE) {
@@ -144,7 +132,7 @@ int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
 }
 
 int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
-    TCPStream *stream = static_cast<TCPStream *>(ctx);
+    TLSStream *stream = static_cast<TLSStream *>(ctx);
 
     socket_error_t err = stream->send(buf, len);
 

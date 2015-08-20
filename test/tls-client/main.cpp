@@ -118,7 +118,7 @@ public:
         _got200 = false;
         _bpos = 0;
         _stream.open(SOCKET_AF_INET4);
-        //_stream.setOnError(TLSStream::ErrorHandler_t(this, &HelloHTTPS::onError));
+        _stream.setOnError(Socket::ErrorHandler_t(this, &HelloHTTPS::onError));
 
         mbedtls_entropy_init(&_entropy);
         mbedtls_ctr_drbg_init(&_ctr_drbg);
@@ -176,7 +176,7 @@ public:
         printf("Starting DNS lookup for %s\r\n", _domain);
         /* Resolve the domain name: */
         socket_error_t err = _stream.resolve(_domain, mbed::Sockets::v0::Socket::DNSHandler_t(this, &HelloHTTPS::onDNS));
-        //_stream.error_check(err);
+        _stream.error_check(err);
     }
     /**
      * Check if the test has completed.
@@ -250,30 +250,30 @@ protected:
      * On Connect handler
      * Sends the request which was generated in startTest
      */
-    void onConnect(TLSStream *s) {
+    void onConnect(TCPStream *s) {
         char buf[16];
         _remoteAddr.fmtIPv4(buf,sizeof(buf));
         printf("Connected to %s:%d\r\n", buf, _port);
         /* Send the request */
-        s->setOnReadable(TLSStream::ReadableHandler_t(this, &HelloHTTPS::onReceive));
-        //s->setOnDisconnect(TLSStream::DisconnectHandler_t(this, &HelloHTTPS::onDisconnect));
+        s->setOnReadable(Socket::ReadableHandler_t(this, &HelloHTTPS::onReceive));
+        s->setOnDisconnect(TCPStream::DisconnectHandler_t(this, &HelloHTTPS::onDisconnect));
         printf("Sending HTTPS Get Request...\r\n");
         socket_error_t err = _stream.send(_buffer, _bpos);
-        //s->error_check(err);
+        s->error_check(err);
     }
     /**
      * On Receive handler
      * Parses the response from the server, to check for the HTTPS 200 status code and the expected response ("Hello World!")
      */
-    void onReceive(TLSStream *s) {
+    void onReceive(Socket *s) {
         printf("HTTPS Response received.\r\n");
         _bpos = sizeof(_buffer);
         /* Read data out of the socket */
         socket_error_t err = s->recv(_buffer, &_bpos);
-        //if (err != SOCKET_ERROR_NONE) {
-        //    onError(s, err);
-        //    return;
-        //}
+        if (err != SOCKET_ERROR_NONE) {
+            onError(s, err);
+            return;
+        }
         _buffer[_bpos] = 0;
         /* Check each of the flags */
         _got200 = _got200 || strstr(_buffer, HTTPS_OK_STR) != NULL;
@@ -305,7 +305,7 @@ protected:
             _remoteAddr.fmtIPv4(buf,sizeof(buf));
             printf("DNS Response Received:\r\n%s: %s\r\n", domain, buf);
             printf("Connecting to %s:%d\r\n", buf, _port);
-            socket_error_t err = _stream.connect(_remoteAddr, _port, TLSStream::ConnectHandler_t(this, &HelloHTTPS::onConnect));
+            socket_error_t err = _stream.connect(_remoteAddr, _port, TCPStream::ConnectHandler_t(this, &HelloHTTPS::onConnect));
 
             if (err != SOCKET_ERROR_NONE) {
                 onError(s, err);
@@ -313,7 +313,7 @@ protected:
             }
         }
     }
-    void onDisconnect(TLSStream *s) {
+    void onDisconnect(TCPStream *s) {
         s->close();
         printf("{{%s}}\r\n",(error()?"failure":"success"));
         printf("{{end}}\r\n");

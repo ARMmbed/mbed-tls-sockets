@@ -26,11 +26,8 @@
  * - namespacing
  */
 
-class TLSStream {
+class TLSStream : public mbed::Sockets::v0::TCPStream {
 public:
-    typedef FunctionPointer1<void, TLSStream *> ConnectHandler_t;
-    typedef FunctionPointer1<void, TLSStream *> ReadableHandler_t;
-
     /**
      * TLSStream constructor
      */
@@ -56,22 +53,11 @@ public:
                          const char *hostname = NULL);
 
     /**
-     * Open the socket
-     */
-    socket_error_t open(const socket_address_family_t af);
-
-    /**
      * Connect (and execute a TLS handshake) with peer
      */
     socket_error_t connect(const mbed::Sockets::v0::SocketAddr &address,
                            const uint16_t port,
                            const ConnectHandler_t &onConnect);
-
-    /**
-     * Resolve a name
-     */
-    socket_error_t resolve(const char* address,
-                           const mbed::Sockets::v0::Socket::DNSHandler_t &onDNS);
 
     /**
      * Set the onReadable callback
@@ -113,16 +99,14 @@ protected:
      * On Connect handler
      * Start the TLS handshake
      */
-    void onConnect(mbed::Sockets::v0::TCPStream *s);
+    void onConnect(TCPStream *s);
 
     /**
      * On Receive handler
      * Complete the handshake if not done yet,
      * or forward ApplicationData from the TLS layer to the user
      */
-    void onReceive(mbed::Sockets::v0::Socket *s);
-
-    mbed::Sockets::v0::TCPStream _stream; /**< underlying TCP Socket */
+    void onReceive(Socket *s);
 
     ConnectHandler_t _onTLSConnect;     /**< User connect handler   */
     ReadableHandler_t _onTLSReadable;   /**< User read handler      */
