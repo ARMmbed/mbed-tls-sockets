@@ -44,6 +44,8 @@ public:
     /**
      * Set up the TLS connection.
      *
+     * @note This method must be called before connect() can be used.
+     *
      * @param conf      SSL/TLS configuration
      * @param hostname  Expected hostname for certificate verification
      *
@@ -106,18 +108,6 @@ protected:
      * Send callback for mbed TLS
      */
     static int ssl_send(void *ctx, const unsigned char *buf, size_t len);
-
-    /**
-     * On Error handler
-     * Closes the stream
-     */
-    void onError(mbed::Sockets::v0::Socket *s, socket_error_t err);
-
-    /**
-     * On DNS Handler
-     * Reads the address returned by DNS, then starts the connect process.
-     */
-    void onDNS(mbed::Sockets::v0::Socket *s, struct socket_addr addr, const char *domain);
 
     /**
      * On Connect handler

@@ -157,15 +157,6 @@ int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
     }
 }
 
-void TLSStream::onError(Socket *s, socket_error_t err) {
-    (void) s;
-    (void) err;
-    /* TODO: free SSL context */
-    _stream.close();
-    _error = true;
-    minar::Scheduler::stop();
-}
-
 void TLSStream::onConnect(TCPStream *s) {
     s->setOnReadable(TCPStream::ReadableHandler_t(this, &TLSStream::onReceive));
     //s->setOnDisconnect(TCPStream::DisconnectHandler_t(this, &TLSStream::onDisconnect));
