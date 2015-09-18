@@ -62,7 +62,7 @@ public:
     /**
      * Set the onReadable callback
      */
-    void setOnReadable(ReadableHandler_t onReadable);
+    void setOnReadable(const ReadableHandler_t &onReadable);
 
     /**
      * Send data over an open connection

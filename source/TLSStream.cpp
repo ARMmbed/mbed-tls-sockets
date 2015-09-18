@@ -57,7 +57,7 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
     return SOCKET_ERROR_NONE;
 }
 
-void TLSStream::setOnReadable(ReadableHandler_t onReadable) {
+void TLSStream::setOnReadable(const ReadableHandler_t &onReadable) {
     _onTLSReadable = onReadable;
 }
 
@@ -180,8 +180,9 @@ void TLSStream::onReceive(Socket *s) {
         }
 
         /* If we get here, that means we just completed the handshake */
-        if (_onTLSConnect)
+        if (_onTLSConnect) {
             minar::Scheduler::postCallback(_onTLSConnect.bind(this));
+        }
     }
 
     /* Check if data is available to be read */
