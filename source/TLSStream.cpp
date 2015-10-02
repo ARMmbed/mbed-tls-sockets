@@ -120,7 +120,7 @@ void TLSStream::print_mbedtls_error(const char *name, int err) {
 
 int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
     TLSStream *stream = static_cast<TLSStream *>(ctx);
-    socket_error_t err = stream->recv(buf, &len);
+    socket_error_t err = stream->TCPStream::recv(buf, &len);
 
     if (err == SOCKET_ERROR_NONE) {
         return static_cast<int>(len);
@@ -133,8 +133,7 @@ int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
 
 int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
     TLSStream *stream = static_cast<TLSStream *>(ctx);
-
-    socket_error_t err = stream->send(buf, len);
+    socket_error_t err = stream->TCPStream::send(buf, len);
 
     if (err == SOCKET_ERROR_NONE) {
         return static_cast<int>(len);
