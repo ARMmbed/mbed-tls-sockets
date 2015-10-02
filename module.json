@@ -18,7 +18,7 @@
     }
   ],
   "dependencies": {
-    "sockets": "~0.3.0",
+    "sockets": "~0.5.0",
     "mbedtls": "^2.1.0"
   },
   "targetDependencies": {}
