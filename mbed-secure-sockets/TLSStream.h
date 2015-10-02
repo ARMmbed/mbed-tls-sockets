@@ -99,14 +99,14 @@ protected:
      * On Connect handler
      * Start the TLS handshake
      */
-    void onConnect(TCPStream *s);
+    void onTCPConnect(TCPStream *s);
 
     /**
      * On Receive handler
      * Complete the handshake if not done yet,
      * or forward ApplicationData from the TLS layer to the user
      */
-    void onReceive(Socket *s);
+    void onTCPReceive(Socket *s);
 
     ConnectHandler_t _onTLSConnect;     /**< User connect handler   */
     ReadableHandler_t _onTLSReadable;   /**< User read handler      */
