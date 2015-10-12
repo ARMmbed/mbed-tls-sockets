@@ -112,8 +112,6 @@ protected:
     ReadableHandler_t _onTLSReadable;   /**< User read handler      */
 
     mbedtls_ssl_context _ssl;       /**< TLS context */
-
-    volatile bool _error;           /**< Status flag for errors */
 };
 
 #endif /* __MBED_SECURE_SOCKETS_TLSSTREAM_H__ */
