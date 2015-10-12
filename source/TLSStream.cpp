@@ -156,8 +156,9 @@ int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
 
 void TLSStream::onTCPConnect(TCPStream *s) {
     printf("XXX: onTCPConnect()\r\n");
-    s->setOnReadable(TCPStream::ReadableHandler_t(this, &TLSStream::onTCPReadable));
-    //s->setOnDisconnect(TCPStream::DisconnectHandler_t(this, &TLSStream::onDisconnect));
+    (void) s;
+
+    TCPStream::setOnReadable(ReadableHandler_t(this, &TLSStream::onTCPReadable));
 
     /* Start the handshake, the rest will be done in onTCPReadable() */
     int ret = mbedtls_ssl_handshake(&_ssl);
