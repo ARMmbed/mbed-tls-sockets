@@ -96,17 +96,17 @@ protected:
     static int ssl_send(void *ctx, const unsigned char *buf, size_t len);
 
     /**
-     * On Connect handler
+     * On TCP Connect handler
      * Start the TLS handshake
      */
     void onTCPConnect(TCPStream *s);
 
     /**
-     * On Receive handler
+     * On TCP Readable handler
      * Complete the handshake if not done yet,
      * or forward ApplicationData from the TLS layer to the user
      */
-    void onTCPReceive(Socket *s);
+    void onTCPReadable(Socket *s);
 
     ConnectHandler_t _onTLSConnect;     /**< User connect handler   */
     ReadableHandler_t _onTLSReadable;   /**< User read handler      */

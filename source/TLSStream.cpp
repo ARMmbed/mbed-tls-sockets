@@ -154,10 +154,10 @@ int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
 
 void TLSStream::onTCPConnect(TCPStream *s) {
     printf("XXX: onTCPConnect()\r\n");
-    s->setOnReadable(TCPStream::ReadableHandler_t(this, &TLSStream::onTCPReceive));
+    s->setOnReadable(TCPStream::ReadableHandler_t(this, &TLSStream::onTCPReadable));
     //s->setOnDisconnect(TCPStream::DisconnectHandler_t(this, &TLSStream::onDisconnect));
 
-    /* Start the handshake, the rest will be done in onTCPReceive() */
+    /* Start the handshake, the rest will be done in onTCPReadable() */
     int ret = mbedtls_ssl_handshake(&_ssl);
     print_mbedtls_error("mbedtls_ssl_handshake", ret);
     if (ret < 0) {
@@ -169,8 +169,8 @@ void TLSStream::onTCPConnect(TCPStream *s) {
     }
 }
 
-void TLSStream::onTCPReceive(Socket *s) {
-    printf("XXX: onTCPReceive()\r\n");
+void TLSStream::onTCPReadable(Socket *s) {
+    printf("XXX: onTCPReeadable()\r\n");
     (void) s;
 
     if (_error)
