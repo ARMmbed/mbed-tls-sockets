@@ -182,6 +182,8 @@ void TLSStream::onTCPReadable(Socket *s) {
         if (_onTLSConnect) {
             printf("XXX: scheduling _onTLSConnect\r\n");
             minar::Scheduler::postCallback(_onTLSConnect.bind(this));
+
+            return;
         }
     }
 
@@ -194,9 +196,10 @@ void TLSStream::onTCPReadable(Socket *s) {
     }
 
     /* TODO: distinguish between 0 because len=0 and
-     * 0 because EOF */
+     * 0 because EOF using get_bytes_avail() */
 
-    /* If we get here, data is available to be read */
-    printf("XXX: scheduling onTLSReadable\r\n");
-    minar::Scheduler::postCallback(_onTLSReadable.bind(this));
+    if (_onTLSReadable) {
+        printf("XXX: scheduling _onTLSReadable\r\n");
+        minar::Scheduler::postCallback(_onTLSReadable.bind(this));
+    }
 }
