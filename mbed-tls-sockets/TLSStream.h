@@ -79,6 +79,12 @@ public:
     socket_error_t close();
 
     /**
+     * Checks the socket status to determine whether it is connected.
+     * @return true if the socket is connected, false if it is not
+     */
+    bool isConnected() const;
+
+    /**
      * Get the last SSL/TLS error code and description.
      * When a method returns \c SOCKET_ERROR_UNKNOWN, call this to get more
      * details about the error.

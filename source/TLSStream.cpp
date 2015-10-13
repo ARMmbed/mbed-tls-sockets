@@ -112,6 +112,11 @@ socket_error_t TLSStream::close() {
     return TCPStream::close();
 }
 
+bool TLSStream::isConnected() const {
+    return TCPStream::isConnected() &&
+           _ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER;
+}
+
 int TLSStream::getTLSError(char *buf, size_t len) const {
     if (buf != NULL && len != 0) {
         mbedtls_strerror(_ssl_error, buf, len);

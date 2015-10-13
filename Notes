@@ -1,7 +1,6 @@
 Todo:
 - sent handler?
 - partial writes (needs local copy of data)
-- override isConnected()
 - disconnectHandler?
 
 Changes needed/desirable in base sockets:
