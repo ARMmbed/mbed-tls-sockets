@@ -21,6 +21,10 @@
 #include "mbed-net-sockets/TCPStream.h"
 #include "mbedtls/ssl.h"
 
+namespace mbed {
+namespace TLS {
+namespace Sockets {
+
 class TLSStream : public mbed::Sockets::v0::TCPStream {
 public:
     /**
@@ -108,5 +112,9 @@ protected:
 
     mbedtls_ssl_context _ssl;       /**< TLS context */
 };
+
+} // namespace Sockets
+} // namespace TLS
+} // namespace mbed
 
 #endif /* __MBED_TLS_SOCKETS_TLSSTREAM_H__ */

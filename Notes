@@ -1,5 +1,4 @@
 Todo:
-- namespacing
 - error handler: call onError() when appropriate
 - error reporting: remember last ssl error and add getter funtion with
   optional pretty-printing

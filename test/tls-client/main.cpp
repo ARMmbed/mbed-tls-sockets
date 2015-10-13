@@ -91,6 +91,7 @@ const char SSL_CA_PEM[] =
 }
 
 using namespace mbed::Sockets::v0;
+using namespace mbed::TLS::Sockets;
 
 /**
  * \brief HelloHTTPS implements the logic for fetching a file from a webserver

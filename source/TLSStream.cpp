@@ -20,6 +20,7 @@
 #include "mbedtls/error.h"
 
 using namespace mbed::Sockets::v0;
+using namespace mbed::TLS::Sockets;
 
 TLSStream::TLSStream(const socket_stack_t stack) :
     TCPStream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL)
