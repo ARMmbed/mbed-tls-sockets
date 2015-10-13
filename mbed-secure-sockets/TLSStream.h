@@ -21,11 +21,6 @@
 #include "mbed-net-sockets/TCPStream.h"
 #include "mbedtls/ssl.h"
 
-/*
- * TODO:
- * - namespacing
- */
-
 class TLSStream : public mbed::Sockets::v0::TCPStream {
 public:
     /**

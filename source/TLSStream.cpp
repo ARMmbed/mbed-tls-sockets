@@ -21,13 +21,6 @@
 
 using namespace mbed::Sockets::v0;
 
-/*
- * TODO:
- * - stop using printf for errors/info
- * - extended error code for SSL errors? (Brendan?)
- * - add support for server (will be another backlog item)
- */
-
 TLSStream::TLSStream(const socket_stack_t stack) :
     TCPStream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL)
 {
