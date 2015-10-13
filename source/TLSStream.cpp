@@ -35,11 +35,9 @@ TLSStream::~TLSStream() {
 socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
                                 const char *hostname)
 {
-    printf("XXX: setup()\r\n");
     int ret;
 
     if ((ret = mbedtls_ssl_setup(&_ssl, conf)) != 0) {
-        print_mbedtls_error("mbedtls_ssl_setup", ret);
         return SOCKET_ERROR_UNKNOWN;
     }
 
@@ -53,14 +51,12 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
 }
 
 void TLSStream::setOnReadable(const ReadableHandler_t &onReadable) {
-    printf("XXX: setOnReadable()\r\n");
     _onTLSReadable = onReadable;
 }
 
 socket_error_t TLSStream::connect(const SocketAddr &address,
                                   const uint16_t port,
                                   const ConnectHandler_t &onConnect) {
-    printf("XXX: connect()\r\n");
     _onTLSConnect = onConnect;
 
     return TCPStream::connect(address, port,
@@ -68,9 +64,7 @@ socket_error_t TLSStream::connect(const SocketAddr &address,
 }
 
 socket_error_t TLSStream::send(const void * buf, const size_t len) {
-    printf("XXX: send()\r\n");
     int ret = mbedtls_ssl_write(&_ssl, (const unsigned char *) buf, len);
-    print_mbedtls_error("mbedtls_ssl_write", ret);
 
     if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
         ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
@@ -87,9 +81,7 @@ socket_error_t TLSStream::send(const void * buf, const size_t len) {
 }
 
 socket_error_t TLSStream::recv(void * buf, size_t *len) {
-    printf("XXX: recv()\r\n");
     int ret = mbedtls_ssl_read(&_ssl, (unsigned char *) buf, *len);
-    print_mbedtls_error("mbedtls_ssl_read", ret);
 
     if (ret == MBEDTLS_ERR_SSL_WANT_READ ||
         ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
@@ -105,23 +97,11 @@ socket_error_t TLSStream::recv(void * buf, size_t *len) {
 }
 
 socket_error_t TLSStream::close() {
-    printf("XXX: close()\r\n");
     mbedtls_ssl_free(&_ssl);
     return TCPStream::close();
 }
 
-void TLSStream::print_mbedtls_error(const char *name, int err) {
-    if(err < 0) {
-        char buf[128];
-        mbedtls_strerror(err, buf, sizeof (buf));
-        printf("XXX: %s() failed: -0x%04x (%d): %s\r\n", name, -err, err, buf);
-    } else {
-        printf("XXX: %s() returned %d\r\n", name, err);
-    }
-}
-
 int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
-    printf("XXX: ssl_recv()\r\n");
     TLSStream *stream = static_cast<TLSStream *>(ctx);
     socket_error_t err = stream->TCPStream::recv(buf, &len);
 
@@ -135,7 +115,6 @@ int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
 }
 
 int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
-    printf("XXX: ssl_send()\r\n");
     TLSStream *stream = static_cast<TLSStream *>(ctx);
     socket_error_t err = stream->TCPStream::send(buf, len);
 
@@ -149,32 +128,27 @@ int TLSStream::ssl_send(void *ctx, const unsigned char *buf, size_t len) {
 }
 
 void TLSStream::onTCPConnect(TCPStream *s) {
-    printf("XXX: onTCPConnect()\r\n");
     (void) s;
 
     TCPStream::setOnReadable(ReadableHandler_t(this, &TLSStream::onTCPReadable));
 
     /* Start the handshake, the rest will be done in onTCPReadable() */
-    int ret = mbedtls_ssl_handshake(&_ssl);
-    print_mbedtls_error("mbedtls_ssl_handshake", ret);
+    (void) mbedtls_ssl_handshake(&_ssl);
 
 }
 
 void TLSStream::onTCPReadable(Socket *s) {
-    printf("XXX: onTCPReeadable()\r\n");
     (void) s;
 
     if (_ssl.state != MBEDTLS_SSL_HANDSHAKE_OVER) {
         /* Continue the handshake */
         int ret = mbedtls_ssl_handshake(&_ssl);
-        print_mbedtls_error("mbedtls_ssl_handshake", ret);
         if (ret < 0) {
             return;
         }
 
         /* If we get here, that means we just completed the handshake */
         if (_onTLSConnect) {
-            printf("XXX: scheduling _onTLSConnect\r\n");
             minar::Scheduler::postCallback(_onTLSConnect.bind(this));
 
             return;
@@ -184,7 +158,6 @@ void TLSStream::onTCPReadable(Socket *s) {
     /* Check if data is available to be read */
     unsigned char buf[1];
     int ret = mbedtls_ssl_read(&_ssl, buf, 0);
-    print_mbedtls_error("mbedtls_ssl_read", ret);
     if (ret < 0) {
         return;
     }
@@ -193,7 +166,6 @@ void TLSStream::onTCPReadable(Socket *s) {
      * 0 because EOF using get_bytes_avail() */
 
     if (_onTLSReadable) {
-        printf("XXX: scheduling _onTLSReadable\r\n");
         minar::Scheduler::postCallback(_onTLSReadable.bind(this));
     }
 }

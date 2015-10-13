@@ -80,11 +80,6 @@ public:
 
 protected:
     /**
-     * Helper for pretty-printing mbed TLS error codes
-     */
-    static void print_mbedtls_error(const char *name, int err);
-
-    /**
      * Receive callback for mbed TLS
      */
     static int ssl_recv(void *ctx, unsigned char *buf, size_t len);
