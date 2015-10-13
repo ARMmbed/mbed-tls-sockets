@@ -23,7 +23,7 @@ using namespace mbed::Sockets::v0;
 using namespace mbed::TLS::Sockets;
 
 TLSStream::TLSStream(const socket_stack_t stack) :
-    TCPStream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL)
+    TCPStream(stack), _onTLSConnect(NULL), _onTLSReadable(NULL), _ssl_error(0)
 {
     mbedtls_ssl_init(&_ssl);
 }
@@ -37,12 +37,19 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
 {
     int ret;
 
-    if ((ret = mbedtls_ssl_setup(&_ssl, conf)) != 0) {
+    ret = mbedtls_ssl_setup(&_ssl, conf);
+    if (ret != 0) {
+        _ssl_error = ret;
+        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
         return SOCKET_ERROR_UNKNOWN;
     }
 
     if (hostname != NULL) {
-        mbedtls_ssl_set_hostname(&_ssl, hostname);
+        ret = mbedtls_ssl_set_hostname(&_ssl, hostname);
+        if (ret != 0) {
+            _ssl_error = ret;
+            minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
+        }
     }
 
     mbedtls_ssl_set_bio(&_ssl, this, ssl_send, ssl_recv, NULL );
@@ -72,6 +79,8 @@ socket_error_t TLSStream::send(const void * buf, const size_t len) {
     }
 
     if (ret < 0) {
+        _ssl_error = ret;
+        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
         return SOCKET_ERROR_UNKNOWN;
     }
 
@@ -89,6 +98,8 @@ socket_error_t TLSStream::recv(void * buf, size_t *len) {
     }
 
     if (ret < 0) {
+        _ssl_error = ret;
+        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
         return SOCKET_ERROR_UNKNOWN;
     }
 
@@ -133,8 +144,15 @@ void TLSStream::onTCPConnect(TCPStream *s) {
     TCPStream::setOnReadable(ReadableHandler_t(this, &TLSStream::onTCPReadable));
 
     /* Start the handshake, the rest will be done in onTCPReadable() */
-    (void) mbedtls_ssl_handshake(&_ssl);
+    int ret = mbedtls_ssl_handshake(&_ssl);
 
+    if (ret != 0 &&
+        ret != MBEDTLS_ERR_SSL_WANT_READ &&
+        ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+    {
+        _ssl_error = ret;
+        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
+    }
 }
 
 void TLSStream::onTCPReadable(Socket *s) {
@@ -144,6 +162,12 @@ void TLSStream::onTCPReadable(Socket *s) {
         /* Continue the handshake */
         int ret = mbedtls_ssl_handshake(&_ssl);
         if (ret < 0) {
+            if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
+                ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+            {
+                _ssl_error = ret;
+                minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
+            }
             return;
         }
 
@@ -159,6 +183,12 @@ void TLSStream::onTCPReadable(Socket *s) {
     unsigned char buf[1];
     int ret = mbedtls_ssl_read(&_ssl, buf, 0);
     if (ret < 0) {
+        if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
+            ret != MBEDTLS_ERR_SSL_WANT_WRITE)
+        {
+            _ssl_error = ret;
+            minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
+        }
         return;
     }
 

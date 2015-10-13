@@ -105,7 +105,8 @@ protected:
     ConnectHandler_t _onTLSConnect;     /**< User connect handler   */
     ReadableHandler_t _onTLSReadable;   /**< User read handler      */
 
-    mbedtls_ssl_context _ssl;       /**< TLS context */
+    mbedtls_ssl_context _ssl;           /**< TLS context            */
+    int _ssl_error;                     /**< Last TLS error         */
 };
 
 } // namespace Sockets
