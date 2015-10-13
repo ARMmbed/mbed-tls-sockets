@@ -112,6 +112,14 @@ socket_error_t TLSStream::close() {
     return TCPStream::close();
 }
 
+int TLSStream::getTLSError(char *buf, size_t len) const {
+    if (buf != NULL && len != 0) {
+        mbedtls_strerror(_ssl_error, buf, len);
+    }
+
+    return _ssl_error;
+}
+
 int TLSStream::ssl_recv(void *ctx, unsigned char *buf, size_t len) {
     TLSStream *stream = static_cast<TLSStream *>(ctx);
     socket_error_t err = stream->TCPStream::recv(buf, &len);

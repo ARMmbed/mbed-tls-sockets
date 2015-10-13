@@ -78,6 +78,18 @@ public:
      */
     socket_error_t close();
 
+    /**
+     * Get the last SSL/TLS error code and description.
+     * When a method returns \c SOCKET_ERROR_UNKNOWN, call this to get more
+     * details about the error.
+     *
+     * @param buf   Buffer to write the error description to.
+     *              If missing or NULL, no error description will be written.
+     * @param len   Size of the buffer in bytes.
+     * @return      The underlying mbed TLS error code.
+     */
+    int getTLSError(char *buf = NULL, size_t len = 0) const;
+
 protected:
     /**
      * Receive callback for mbed TLS

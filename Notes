@@ -1,11 +1,8 @@
 Todo:
-- error reporting: remember last ssl error and add getter funtion with
-  optional pretty-printing
 - sent handler?
 - partial writes (needs local copy of data)
 - override isConnected()
 - disconnectHandler?
-- stop printf()ing
 
 Changes needed/desirable in base sockets:
 - add SOCKET_ERROR_TLS?
