@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "mbed-secure-sockets/TLSStream.h"
+#include "mbed-tls-sockets/TLSStream.h"
 #include "minar/minar.h"
 #include "mbedtls/error.h"
 

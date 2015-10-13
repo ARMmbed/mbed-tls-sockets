@@ -33,7 +33,7 @@
 
 #include "mbed.h"
 #include "EthernetInterface.h"
-#include "mbed-secure-sockets/TLSStream.h"
+#include "mbed-tls-sockets/TLSStream.h"
 #include "test_env.h"
 #include "minar/minar.h"
 

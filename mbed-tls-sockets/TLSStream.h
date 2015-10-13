@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef __MBED_SECURE_SOCKETS_TLSSTREAM_H__
-#define __MBED_SECURE_SOCKETS_TLSSTREAM_H__
+#ifndef __MBED_TLS_SOCKETS_TLSSTREAM_H__
+#define __MBED_TLS_SOCKETS_TLSSTREAM_H__
 
 #include "mbed-net-sockets/TCPStream.h"
 #include "mbedtls/ssl.h"
@@ -109,4 +109,4 @@ protected:
     mbedtls_ssl_context _ssl;       /**< TLS context */
 };
 
-#endif /* __MBED_SECURE_SOCKETS_TLSSTREAM_H__ */
+#endif /* __MBED_TLS_SOCKETS_TLSSTREAM_H__ */

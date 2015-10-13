@@ -1,7 +1,7 @@
 {
-  "name": "mbed-secure-sockets",
+  "name": "mbed-tls-sockets",
   "version": "0.0.0",
-  "description": "C++ Asynchronous Secure Sockets Layer",
+  "description": "C++ Asynchronous Secure Sockets API for mbed TLS",
   "private": true,
   "keywords": [
     "mbed",
@@ -18,7 +18,7 @@
     }
   ],
   "dependencies": {
-    "sockets": "~0.5.0",
+    "sockets": "~0.6.0",
     "mbedtls": "^2.1.0"
   },
   "targetDependencies": {}
