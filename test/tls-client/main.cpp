@@ -176,7 +176,7 @@ public:
         /* Connect to the server */
         printf("Starting DNS lookup for %s\r\n", _domain);
         /* Resolve the domain name: */
-        socket_error_t err = _stream.resolve(_domain, mbed::Sockets::v0::Socket::DNSHandler_t(this, &HelloHTTPS::onDNS));
+        socket_error_t err = _stream.resolve(_domain, Socket::DNSHandler_t(this, &HelloHTTPS::onDNS));
         _stream.error_check(err);
     }
     /**
