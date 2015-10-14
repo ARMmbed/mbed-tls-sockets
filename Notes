@@ -1,8 +1,12 @@
-Todo:
-- sent handler? depends on what we want to do with partial writes
+Questions:
 - partial writes: either change the Sockets API or handle this on our side by
   storing a local copy of the data and doing a second write, probably in the
 sent handler
+- sent handler? depends on what we want to do with partial writes
+- is it a good idea to require users to check the return code of close() and
+  call again on WOULD_BLOCK? While the TLS spec says we must send
+close_notify, in practice all peers can handle its absence. Maybe it's better
+to have a simpler API here?
 
 Changes needed/desirable in base sockets:
 - add SOCKET_ERROR_TLS? The s/SOCKET_ERROR_UNKNOWN/SOCKET_ERROR_TLS/ here.

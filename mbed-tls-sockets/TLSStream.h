@@ -75,6 +75,9 @@ public:
 
     /**
      * Close the connection
+     *
+     * @return  A socket error code. SOCKET_ERROR_WOULD_BLOCK means you need
+     * to call this again in order to send the TLS close notify message.
      */
     socket_error_t close();
 

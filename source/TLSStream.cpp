@@ -108,6 +108,13 @@ socket_error_t TLSStream::recv(void * buf, size_t *len) {
 }
 
 socket_error_t TLSStream::close() {
+    int ret = mbedtls_ssl_close_notify(&_ssl);
+
+    if (ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
+        return SOCKET_ERROR_WOULD_BLOCK;
+    }
+    /* Ignore other errors, the connection may be closed or unusable */
+
     mbedtls_ssl_free(&_ssl);
     return TCPStream::close();
 }
