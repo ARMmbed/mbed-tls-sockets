@@ -21,4 +21,4 @@ The main things you need to set up in the SSL/TLS configuration are:
 0. A cryptographically secure source of (pseudo-)random numbers. In the future a default source might be provided and set up automatically, but for now each application has to to it.
 0. A (list of) trusted root(s) for certificate-based authentication. Here, no sensible default can be defined, so it will always be up to the user to decide which certification authorities (CA) to trust, or to configure other means of server authentication. **Warning**: failing to perform server authentication would remove most security guarantees offered by TLS.
 
-An example of using this class can be found in [`test/tls-client`](https://github.com/ARMmbed/mbed-tls-sockets/tree/master/test/tls-client).
+An example of using this class can be found in [`test/tls-client`](https://github.com/ARMmbed/mbed-tls-sockets/tree/master/test/tls-client); see its Readme file for how to build, run, and if necessary debug it.
