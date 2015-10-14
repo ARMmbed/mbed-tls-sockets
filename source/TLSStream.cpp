@@ -212,10 +212,7 @@ void TLSStream::onTCPReadable(Socket *s) {
         return;
     }
 
-    /* TODO: distinguish between 0 because len=0 and
-     * 0 because EOF using get_bytes_avail() */
-
-    if (_onTLSReadable) {
+    if (_onTLSReadable && mbedtls_ssl_get_bytes_avail(&_ssl) != 0) {
         minar::Scheduler::postCallback(_onTLSReadable.bind(this));
     }
 }
