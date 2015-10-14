@@ -242,6 +242,12 @@ protected:
     void onError(Socket *s, socket_error_t err) {
         (void) s;
         printf("MBED: Socket Error: %s (%d)\r\n", socket_strerror(err), err);
+        if (_stream.getTLSError()) {
+            char buf[128];
+            int ret = _stream.getTLSError(buf, sizeof buf);
+            printf("MBED: TLS Error: %04x: %s\r\n", -ret, buf);
+        }
+
         _stream.close();
         _error = true;
         printf("{{%s}}\r\n",(error()?"failure":"success"));
