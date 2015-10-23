@@ -9,6 +9,8 @@ It is currently in beta stage, only intended for evaluation.
 The following classes (all inheriting from the `Socket` class in the [sockets][Socket] module) are provided:
 
 0. **TLSStream** for TLS clients
+0. Upcoming: DTLS clients
+0. Upcoming depending on demand: TLS and DTLS servers
 
 The remaining sections of this document provide guidance on using those classes.
 
