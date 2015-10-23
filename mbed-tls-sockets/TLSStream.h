@@ -18,7 +18,7 @@
 #ifndef __MBED_TLS_SOCKETS_TLSSTREAM_H__
 #define __MBED_TLS_SOCKETS_TLSSTREAM_H__
 
-#include "mbed-net-sockets/TCPStream.h"
+#include "sockets/TCPStream.h"
 #include "mbedtls/ssl.h"
 
 namespace mbed {

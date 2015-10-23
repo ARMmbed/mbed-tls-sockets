@@ -31,10 +31,10 @@
 /* Change to 1 to skip certificate verification (UNSAFE, for debug only!) */
 #define UNSAFE 0
 
-#include "mbed.h"
+#include "mbed-drivers/mbed.h"
 #include "EthernetInterface.h"
 #include "mbed-tls-sockets/TLSStream.h"
-#include "test_env.h"
+#include "mbed-drivers/test_env.h"
 #include "minar/minar.h"
 
 #include "lwipv4_init.h"
