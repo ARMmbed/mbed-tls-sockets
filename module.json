@@ -1,6 +1,6 @@
 {
   "name": "mbed-tls-sockets",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "C++ Asynchronous Secure Sockets API for mbed TLS",
   "private": true,
   "keywords": [
