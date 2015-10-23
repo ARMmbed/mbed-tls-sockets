@@ -85,6 +85,10 @@ socket_error_t TLSStream::send(const void * buf, const size_t len) {
     }
 
     /* TODO: handle partial writes */
+    if ((size_t) ret != len) {
+        _ssl_error = -1;
+        return SOCKET_ERROR_UNKNOWN;
+    }
 
     return SOCKET_ERROR_NONE;
 }
