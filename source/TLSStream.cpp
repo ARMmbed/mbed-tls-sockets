@@ -40,7 +40,6 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
     ret = mbedtls_ssl_setup(&_ssl, conf);
     if (ret != 0) {
         _ssl_error = ret;
-        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
         return SOCKET_ERROR_UNKNOWN;
     }
 
@@ -48,7 +47,7 @@ socket_error_t TLSStream::setup(const mbedtls_ssl_config *conf,
         ret = mbedtls_ssl_set_hostname(&_ssl, hostname);
         if (ret != 0) {
             _ssl_error = ret;
-            minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
+            return SOCKET_ERROR_UNKNOWN;
         }
     }
 
@@ -80,7 +79,6 @@ socket_error_t TLSStream::send(const void * buf, const size_t len) {
 
     if (ret < 0) {
         _ssl_error = ret;
-        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
         return SOCKET_ERROR_UNKNOWN;
     }
 
@@ -103,7 +101,6 @@ socket_error_t TLSStream::recv(void * buf, size_t *len) {
 
     if (ret < 0) {
         _ssl_error = ret;
-        minar::Scheduler::postCallback(_onError.bind(this, SOCKET_ERROR_UNKNOWN));
         return SOCKET_ERROR_UNKNOWN;
     }
 
