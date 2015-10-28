@@ -63,7 +63,7 @@ const char *HTTPS_HELLO_STR = "Hello world!";
 const char *DRBG_PERS = "mbed TLS helloword client";
 
 /* List of trusted root CA certificates
- * currently just Verisign since it's the root used by developer.mbed.org
+ * Currently this is just GlobalSign as it's the root used by developer.mbed.org
  * If you want to trust more that one root, just concatenate them.
  */
 const char SSL_CA_PEM[] =
