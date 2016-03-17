@@ -351,12 +351,9 @@ EthernetInterface eth;
 HelloHTTPS *hello;
 
 void app_start(int, char*[]) {
-    /* The default 9600 bps is too slow to print full TLS debug info and could
-     * cause the other party to time out. Select a higher baud rate for
-     * printf(), regardless of debug level for the sake of uniformity. */
-    Serial pc(USBTX, USBRX);
-    pc.baud(115200);
-
+    /* Use 115200 bps for consistency with other examples */
+    get_stdio_serial().baud(115200);
+    
     printf("{{start}}\r\n");
 
     /* Initialise with DHCP, connect, and start up the stack */
