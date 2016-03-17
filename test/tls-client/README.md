@@ -26,7 +26,7 @@ To build and run this example you must have:
 
 2. Connect the FRDM-K64F to the computer with the micro-USB cable, being careful to use the "OpenSDA" connector on the target board.
 
-3. Navigate to the mbedtls directory supplied with your release and open a terminal.
+3. Navigate to the mbed-tls-sockets directory supplied with your release and open a terminal.
 
 4. Set the yotta target:
 
@@ -34,7 +34,7 @@ To build and run this example you must have:
     yotta target frdm-k64f-gcc
     ```
 
-5. Build mbedtls and the examples. This will take a long time if it is the first time:
+5. Build mbed-tls-sockets and the examples. This will take a long time if it is the first time:
 
     ```
     $ yotta build
