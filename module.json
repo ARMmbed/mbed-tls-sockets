@@ -1,6 +1,6 @@
 {
   "name": "mbed-tls-sockets",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "C++ Asynchronous Secure Sockets API for mbed TLS",
   "keywords": [
     "mbed",
@@ -9,7 +9,7 @@
     "DTLS",
     "sockets"
   ],
-  "author": "manuel.pegourie-gonnard@arm.com",
+  "author": "simon.butcher@arm.com",
   "licenses": [
     {
       "url": "https://spdx.org/licenses/Apache-2.0",
